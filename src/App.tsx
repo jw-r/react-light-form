@@ -5,26 +5,26 @@ import './App.css';
 interface Values {
   name: string;
   age: number;
-  a: {
-    b: string;
-    c: string;
-  };
 }
 
 function App() {
-  const { register, handleSubmit, errors, values } = useForm<Values>({
-    name: 'woody',
-    age: 3,
-  });
+  const { register, handleSubmit } = useForm<Values>();
 
-  const onSubmit = () => {
-    console.log(values.name);
+  // 어떻게 타입 추론이 가능하게 할 수 있을까?
+  const onSubmit = (values: Values) => {
+    console.log(typeof values.age);
   };
 
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <input {...register('name')} />
+        <input
+          {...register('age', {
+            onMountFocus: true,
+            value: 3,
+            setValueAs: (value) => Number(value),
+          })}
+        />
       </form>
     </div>
   );
