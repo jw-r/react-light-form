@@ -2,9 +2,11 @@ import React, { useRef, useState } from 'react';
 import {
   FieldElementType,
   FieldValues,
-  HandleSubmitType,
+  GetValueHandler,
+  GetValuesHandler,
+  HandleSubmitHandler,
   InputRefsType,
-  Options,
+  OptionsType,
   UseFormReturnType,
 } from './type';
 
@@ -13,7 +15,7 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
   const inputRefs = useRef<InputRefsType<T>>({});
   const valuesRef = useRef<Partial<T>>({});
 
-  const register = (name: keyof T, options?: Options) => {
+  const register = (name: keyof T, options?: OptionsType) => {
     if (inputRefs.current?.[name]) return;
 
     return {
@@ -50,7 +52,18 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
     };
   };
 
-  const handleSubmit: HandleSubmitType<T> = (callback) => (e) => {
+  const getValue: GetValueHandler<T> = (name) => {
+    return valuesRef.current[name] as T[keyof T];
+  };
+
+  const getValues: GetValuesHandler<T> = (...names) => {
+    return names.reduce((acc, name) => {
+      acc[name] = valuesRef.current[name];
+      return acc;
+    }, {} as Partial<Record<keyof T, T[keyof T]>>);
+  };
+
+  const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
     e.preventDefault();
 
     // TODO 유효성 검사
@@ -64,6 +77,8 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
     register,
     handleSubmit,
     errors,
+    getValue,
+    getValues,
   };
 };
 
