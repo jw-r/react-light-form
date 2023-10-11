@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   FieldElementType,
   FieldValues,
@@ -14,32 +14,39 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
   const [errors, setErrors] = useState<Partial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
   const valuesRef = useRef<Partial<T>>({});
+  const listeners = useRef<Set<keyof T>>(new Set());
+  const [, forceUpdate] = useState({});
+
+  useEffect(() => {
+    if (listeners.current.size > 0) {
+      reRender();
+    }
+  }, []);
 
   const register = (name: keyof T, options?: OptionsType) => {
-    if (inputRefs.current?.[name]) return;
-
     return {
       name: String(name),
 
       ref: (element: FieldElementType) => {
         if (!element) return;
 
-        // TODO nested 처리
-        // set(inputRefs.current, nested 객체, element);
+        if (!inputRefs.current[name]) {
+          if (options?.value) {
+            element.value = String(options.value);
 
-        inputRefs.current[name] = element;
+            // TODO nested 처리
+            // set(valuesRef.current, nested 객체 , options.value);
 
-        if (options?.value) {
-          element.value = String(options?.value);
+            // Set Value
+            valuesRef.current[name as keyof T] = options.value as T[keyof T];
+          }
 
-          // TODO nested 처리
-          // set(valuesRef.current, nested 객체 , options.value);
+          inputRefs.current[name] = element;
 
-          // Set Value
-          valuesRef.current[name as keyof T] = options.value as T[keyof T];
+          if (options?.onMountFocus) inputRefs.current[name]?.focus();
         }
 
-        if (options?.onMountFocus) inputRefs.current[name]?.focus();
+        return inputRefs.current[name];
       },
 
       onChange: ({ target: { name, value } }: React.ChangeEvent<FieldElementType>) => {
@@ -48,19 +55,30 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
         // Set Value
         const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
         valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
+
+        if (listeners.current.has(name as keyof T)) reRender();
       },
     };
   };
 
+  const reRender = () => {
+    forceUpdate({});
+  };
+
   const getValue: GetValueHandler<T> = (name) => {
-    return valuesRef.current[name] as T[keyof T];
+    const value = valuesRef.current[name] as T[keyof T];
+    listeners.current.add(name);
+    return value;
   };
 
   const getValues: GetValuesHandler<T> = (...names) => {
-    return names.reduce((acc, name) => {
+    const values = names.reduce((acc, name) => {
+      listeners.current.add(name);
       acc[name] = valuesRef.current[name];
       return acc;
     }, {} as Partial<Record<keyof T, T[keyof T]>>);
+
+    return values;
   };
 
   const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
