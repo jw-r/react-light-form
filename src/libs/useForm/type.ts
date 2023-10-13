@@ -1,5 +1,3 @@
-import React from 'react';
-
 export type Noop = () => void;
 
 export type FieldElementType = HTMLInputElement | HTMLTextAreaElement | null;
@@ -37,19 +35,4 @@ export type HandleSubmitHandler<T> = (
 
 export type GetValueHandler<T> = (name: keyof T) => T[keyof T];
 
-export type GetValuesHandler<T> = (...names: (keyof T)[]) => Partial<Record<keyof T, T[keyof T]>>;
-
-export type UseFormReturnType<T> = {
-  register: (
-    name: keyof T,
-    options?: OptionsType
-  ) => {
-    name: string;
-    ref: (element: FieldElementType) => void;
-    onChange: (e: React.ChangeEvent<FieldElementType>) => void;
-  } | void;
-  handleSubmit: HandleSubmitHandler<T>;
-  errors: Partial<T>;
-  getValue: GetValueHandler<T>;
-  getValues: GetValuesHandler<T>;
-};
+export type GetValuesHandler<T> = (names: (keyof T)[]) => Partial<Record<keyof T, T[keyof T]>>;

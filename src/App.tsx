@@ -8,15 +8,13 @@ interface Values {
 }
 
 function App() {
-  const { register, handleSubmit, getValue } = useForm<Values>();
+  const { register, handleSubmit, watch } = useForm<Values>();
 
-  const nameValue = getValue('name');
-  console.log(nameValue);
+  const nameValue = watch('name');
 
   // 어떻게 타입 추론이 가능하게 할 수 있을까?
   const onSubmit = (values: Values) => {
-    console.log(values);
-    console.log(typeof values.age);
+    values;
   };
 
   return (
@@ -26,17 +24,15 @@ function App() {
         <input
           {...register('name', {
             onMountFocus: true,
-            value: 'woody',
           })}
         />
         <div>나이</div>
         <input
           {...register('age', {
-            value: 3,
             setValueAs: (value) => Number(value),
           })}
         />
-        {/* <div>크루의 이름은 {nameValue}</div> */}
+        <div>크루의 이름은 {nameValue}</div>
         <button>제출</button>
       </form>
     </div>
@@ -44,9 +40,3 @@ function App() {
 }
 
 export default App;
-
-// const {
-//   register,
-//   handleSubmit,
-//   formState: { errors },
-// } = useForm<Values>();

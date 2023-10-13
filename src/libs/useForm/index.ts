@@ -7,16 +7,15 @@ import {
   HandleSubmitHandler,
   InputRefsType,
   OptionsType,
-  UseFormReturnType,
 } from './type';
 
-const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
+const useForm = <T = FieldValues>() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [errors, setErrors] = useState<Partial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
   const valuesRef = useRef<Partial<T>>({});
   const listeners = useRef<Set<keyof T>>(new Set());
   const [, forceUpdate] = useState({});
-  console.log(setErrors);
 
   useEffect(() => {
     if (listeners.current.size > 0) {
@@ -35,10 +34,6 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
           if (options?.value) {
             element.value = String(options.value);
 
-            // TODO nested 처리
-            // set(valuesRef.current, nested 객체 , options.value);
-
-            // Set Value
             valuesRef.current[name as keyof T] = options.value as T[keyof T];
           }
 
@@ -51,9 +46,6 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
       },
 
       onChange: ({ target: { name, value } }: React.ChangeEvent<FieldElementType>) => {
-        // TODO 요효성 검사
-
-        // Set Value
         const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
         valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
 
@@ -72,7 +64,7 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
     return value;
   };
 
-  const getValues: GetValuesHandler<T> = (...names) => {
+  const getValues: GetValuesHandler<T> = (names) => {
     const values = names.reduce((acc, name) => {
       listeners.current.add(name);
       acc[name] = valuesRef.current[name];
@@ -82,10 +74,18 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
     return values;
   };
 
+  function watch(name: keyof T): T[keyof T];
+  function watch(name: keyof T, ...rest: (keyof T)[]): Partial<Record<keyof T, T[keyof T]>>;
+  function watch(name: keyof T, ...rest: (keyof T)[]): any {
+    if (rest.length === 0) {
+      return getValue(name);
+    }
+
+    return getValues([name, ...rest]);
+  }
+
   const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
     e.preventDefault();
-
-    // TODO 유효성 검사
 
     const values = valuesRef.current as T;
 
@@ -98,6 +98,7 @@ const useForm = <T = FieldValues>(): UseFormReturnType<T> => {
     errors,
     getValue,
     getValues,
+    watch,
   };
 };
 
