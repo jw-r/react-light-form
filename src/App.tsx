@@ -5,16 +5,19 @@ import './App.css';
 interface Values {
   name: string;
   age: number;
+  ok: true;
 }
 
 function App() {
   const { register, handleSubmit, watch } = useForm<Values>();
 
   const nameValue = watch('name');
+  const values = watch('name', 'age');
+  console.log(nameValue);
+  console.log(values);
 
-  // 어떻게 타입 추론이 가능하게 할 수 있을까?
   const onSubmit = (values: Values) => {
-    values;
+    console.log(values);
   };
 
   return (

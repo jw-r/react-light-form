@@ -8,6 +8,7 @@ import {
   InputRefsType,
   OptionsType,
 } from './type';
+import useRender from './useRender';
 
 const useForm = <T = FieldValues>() => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -15,7 +16,7 @@ const useForm = <T = FieldValues>() => {
   const inputRefs = useRef<InputRefsType<T>>({});
   const valuesRef = useRef<Partial<T>>({});
   const listeners = useRef<Set<keyof T>>(new Set());
-  const [, forceUpdate] = useState({});
+  const { reRender } = useRender();
 
   useEffect(() => {
     if (listeners.current.size > 0) {
@@ -54,13 +55,10 @@ const useForm = <T = FieldValues>() => {
     };
   };
 
-  const reRender = () => {
-    forceUpdate({});
-  };
-
   const getValue: GetValueHandler<T> = (name) => {
     const value = valuesRef.current[name] as T[keyof T];
     listeners.current.add(name);
+
     return value;
   };
 
@@ -76,11 +74,11 @@ const useForm = <T = FieldValues>() => {
 
   function watch(name: keyof T): T[keyof T];
   function watch(name: keyof T, ...rest: (keyof T)[]): Partial<Record<keyof T, T[keyof T]>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function watch(name: keyof T, ...rest: (keyof T)[]): any {
     if (rest.length === 0) {
       return getValue(name);
     }
-
     return getValues([name, ...rest]);
   }
 
