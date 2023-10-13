@@ -1,7 +1,6 @@
 {
-  "name": "react-light-form",
+  "name": "react-lightweight-form",
   "version": "0.0.1",
-  "private": false,
   "description": "Lightweight and easy-to-use form",
   "type": "module",
   "main": "dist/index.umd.cjs",
