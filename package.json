@@ -1,6 +1,6 @@
 {
   "name": "react-lightweight-form",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "Lightweight and easy-to-use form",
   "type": "module",
   "main": "dist/index.umd.cjs",
@@ -15,6 +15,21 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "react",
+    "hooks",
+    "form",
+    "forms",
+    "form-validation",
+    "validation",
+    "typescript",
+    "react-hooks"
+  ],
+  "homepage": "https://github.com/jw-r/react-light-form#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jw-r/react-light-form.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
