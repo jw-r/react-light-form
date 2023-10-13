@@ -1,0 +1,11 @@
+index.html               
+package.json
+package.lock.json
+/public
+/src
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+.eslintrc.cjs
+.prettierrc
+vite.config.ts
