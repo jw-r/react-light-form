@@ -94,8 +94,6 @@ const useForm = <T = FieldValues>() => {
     register,
     handleSubmit,
     errors,
-    getValue,
-    getValues,
     watch,
   };
 };

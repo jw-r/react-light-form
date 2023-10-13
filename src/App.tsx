@@ -12,9 +12,6 @@ function App() {
   const { register, handleSubmit, watch } = useForm<Values>();
 
   const nameValue = watch('name');
-  const values = watch('name', 'age');
-  console.log(nameValue);
-  console.log(values);
 
   const onSubmit = (values: Values) => {
     console.log(values);
