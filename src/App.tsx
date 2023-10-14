@@ -5,7 +5,6 @@ import './App.css';
 interface Values {
   name: string;
   age: number;
-  ok: true;
 }
 
 function App() {
