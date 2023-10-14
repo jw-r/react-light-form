@@ -11,7 +11,8 @@ interface Values {
 function App() {
   const { register, handleSubmit, watch } = useForm<Values>();
 
-  const nameValue = watch('name');
+  const nameValue = watch('name'); // 타입이 string | undefined
+  const values = watch('name', 'age'); // 타입이 { age?: number | undefined; name?: string | undefined; }
 
   const onSubmit = (values: Values) => {
     console.log(values);

@@ -33,6 +33,6 @@ export type HandleSubmitHandler<T> = (
   callback: (values: T) => void
 ) => (e: React.FormEvent) => void;
 
-export type GetValueHandler<T> = (name: keyof T) => T[keyof T];
+export type GetValueHandler<T> = <K extends keyof T>(name: K) => T[K] | undefined;
 
-export type GetValuesHandler<T> = (names: (keyof T)[]) => Partial<Record<keyof T, T[keyof T]>>;
+export type GetValuesHandler<T> = <K extends keyof T>(names: K[]) => { [P in K]?: T[P] };

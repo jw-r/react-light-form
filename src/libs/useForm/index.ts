@@ -56,7 +56,7 @@ const useForm = <T = FieldValues>() => {
   };
 
   const getValue: GetValueHandler<T> = (name) => {
-    const value = valuesRef.current[name] as T[keyof T];
+    const value = valuesRef.current[name];
     listeners.current.add(name);
 
     return value;
@@ -65,21 +65,23 @@ const useForm = <T = FieldValues>() => {
   const getValues: GetValuesHandler<T> = (names) => {
     const values = names.reduce((acc, name) => {
       listeners.current.add(name);
-      acc[name] = valuesRef.current[name];
+      const currentValue = valuesRef.current[name];
+      if (currentValue !== undefined) {
+        acc[name] = currentValue;
+      }
       return acc;
-    }, {} as Partial<Record<keyof T, T[keyof T]>>);
+    }, {} as Pick<T, (typeof names)[number]>);
 
     return values;
   };
 
-  function watch(name: keyof T): T[keyof T];
-  function watch(name: keyof T, ...rest: (keyof T)[]): Partial<Record<keyof T, T[keyof T]>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function watch(name: keyof T, ...rest: (keyof T)[]): any {
-    if (rest.length === 0) {
-      return getValue(name);
+  function watch<K extends keyof T>(name: K): T[K] | undefined;
+  function watch<K extends keyof T>(...names: K[]): { [P in K]?: T[P] };
+  function watch<K extends keyof T>(...names: K[]): T[K] | { [P in K]?: T[P] } | undefined {
+    if (names.length === 1) {
+      return getValue(names[0]);
     }
-    return getValues([name, ...rest]);
+    return getValues(names);
   }
 
   const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
