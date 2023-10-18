@@ -1,3 +1,5 @@
+import { Validation } from './validation/type';
+
 export type Noop = () => void;
 
 export type FieldElementType = HTMLInputElement | HTMLTextAreaElement | null;
@@ -17,12 +19,12 @@ export type OptionsType = Partial<{
   onErrorFocus: boolean;
   onMountFocus: boolean;
 
-  required: boolean;
-  maxLength: number;
-  minLength: number;
-  max: number;
-  min: number;
-  pattern: RegExp;
+  required: Validation<boolean>;
+  maxLength: Validation<number>;
+  minLength: Validation<number>;
+  max: Validation<number>;
+  min: Validation<number>;
+  pattern: Validation<RegExp>;
   validate: Noop;
 
   initialValue: ValueTypes;
