@@ -32,10 +32,10 @@ const useForm = <T = FieldValues>() => {
         if (!element) return;
 
         if (!inputRefs.current[name]) {
-          if (options?.value) {
-            element.value = String(options.value);
+          if (options?.initialValue) {
+            element.value = String(options.initialValue);
 
-            valuesRef.current[name as keyof T] = options.value as T[keyof T];
+            valuesRef.current[name as keyof T] = options.initialValue as T[keyof T];
           }
 
           inputRefs.current[name] = element;

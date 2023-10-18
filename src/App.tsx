@@ -23,6 +23,7 @@ function App() {
         <div>이름</div>
         <input
           {...register('name', {
+            initialValue: 'woody',
             onMountFocus: true,
           })}
         />

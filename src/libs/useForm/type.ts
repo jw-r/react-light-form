@@ -25,7 +25,7 @@ export type OptionsType = Partial<{
   pattern: RegExp;
   validate: Noop;
 
-  value: ValueTypes;
+  initialValue: ValueTypes;
   setValueAs: (value: string) => ValueTypes;
 }>;
 
