@@ -18,6 +18,7 @@ export type InputRefsType<T> = {
 export type OptionsType = Partial<{
   onErrorFocus: boolean;
   onMountFocus: boolean;
+  autoComplete: boolean;
 
   required: Validation<boolean>;
   maxLength: Validation<number>;

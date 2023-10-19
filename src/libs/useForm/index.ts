@@ -31,6 +31,8 @@ const useForm = <T = FieldValues>() => {
 
       name: String(name),
 
+      autoComplete: options?.autoComplete === false ? 'off' : 'on',
+
       ref: (element: FieldElementType) => {
         if (!element) return;
 
@@ -71,7 +73,9 @@ const useForm = <T = FieldValues>() => {
 
           if (isError && errors[name as keyof T] !== errorMessage) {
             setErrors((prev) => ({ ...prev, [name]: errorMessage }));
-            target.focus();
+            options.onErrorFocus !== false && target.focus();
+          } else if (!isError && errors[name as keyof T]) {
+            setErrors((prev) => ({ ...prev, [name]: '' }));
           }
         }
 
@@ -99,7 +103,9 @@ const useForm = <T = FieldValues>() => {
 
         if (isError && errors[name as keyof T] !== errorMessage) {
           setErrors((prev) => ({ ...prev, [name]: errorMessage }));
-          target.focus();
+          options.onErrorFocus !== false && target.focus();
+        } else if (!isError && errors[name as keyof T]) {
+          setErrors((prev) => ({ ...prev, [name]: '' }));
         }
       },
     };
