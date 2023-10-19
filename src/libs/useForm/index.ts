@@ -9,10 +9,10 @@ import {
   OptionsType,
 } from './type';
 import useRender from './useRender';
-import { ValidateType, Validation } from './validation/type';
+import { Validation } from './validation/type';
+import { validate } from './validation/validation';
 
 const useForm = <T = FieldValues>() => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [errors, setErrors] = useState<Partial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
   const valuesRef = useRef<Partial<T>>({});
@@ -27,6 +27,8 @@ const useForm = <T = FieldValues>() => {
 
   const register = (name: keyof T, options?: OptionsType) => {
     return {
+      id: name,
+
       name: String(name),
 
       ref: (element: FieldElementType) => {
@@ -47,20 +49,47 @@ const useForm = <T = FieldValues>() => {
         return inputRefs.current[name];
       },
 
-      onChange: ({ target: { name, value } }: React.ChangeEvent<FieldElementType>) => {
+      onChange: ({ target }: React.ChangeEvent<FieldElementType>) => {
+        const { name, value } = target;
         const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
+
+        // validation
+        let [isError, errorMessage] = [false, ''];
+        if (options) {
+          const { maxLength, max, pattern } = options;
+          Object.entries({ maxLength, max, pattern }).forEach(([key, pair]) => {
+            if (isError) return;
+
+            if (key === 'maxLength' && pair) {
+              [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+            } else if (key === 'max' && pair) {
+              [isError, errorMessage] = validate.max(value, pair as Validation<number>);
+            } else if (key === 'pattern' && pair) {
+              [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
+            }
+          });
+
+          if (isError && errors[name as keyof T] !== errorMessage) {
+            setErrors((prev) => ({ ...prev, [name]: errorMessage }));
+            target.focus();
+          }
+        }
+
         valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
 
         if (listeners.current.has(name as keyof T)) reRender();
       },
 
       onBlur: ({ target }: React.FocusEvent<FieldElementType>) => {
+        // validation
         if (!options) return;
         const { name, value } = target;
-        let [isError, errorMessage] = [false, '형식에 맞지 않는 값입니다'];
+        let [isError, errorMessage] = [false, ''];
 
-        const { required, minLength } = options;
-        Object.entries({ required, minLength }).forEach(([key, pair]) => {
+        const { required, minLength, min } = options;
+        Object.entries({ required, minLength, min }).forEach(([key, pair]) => {
+          if (isError) return;
+
           if (key === 'required' && pair) {
             [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
           } else if (key === 'minLength' && pair) {
@@ -68,49 +97,12 @@ const useForm = <T = FieldValues>() => {
           }
         });
 
-        if (isError) {
+        if (isError && errors[name as keyof T] !== errorMessage) {
           setErrors((prev) => ({ ...prev, [name]: errorMessage }));
           target.focus();
         }
       },
     };
-  };
-
-  const validate: ValidateType = {
-    // onBlue와 onSubmit 이벤트 발생시 검사
-    required: (value, option) => {
-      if (value !== '') return [false, 'No Error'];
-
-      if (typeof option === 'boolean') {
-        return [true, '형식에 맞지 않는 값입니다'];
-      }
-
-      return [true, option.message];
-    },
-    minLength: (value, option) => {
-      console.log(value, option);
-      return [false, '형식에 맞지 않는 값입니다'];
-    },
-
-    // onChange와 onSubmit 이벤트 발생 시 검사
-    maxLength: (value, option) => {
-      console.log(value, option);
-      return [false, '형식에 맞지 않는 값입니다'];
-    },
-    max: (value, option) => {
-      console.log(value, option);
-      return [false, '형식에 맞지 않는 값입니다'];
-    },
-    min: (value, option) => {
-      console.log(value, option);
-      return [false, '형식에 맞지 않는 값입니다'];
-    },
-    pattern: (value, option) => {
-      console.log(value, option);
-      return [false, '형식에 맞지 않는 값입니다'];
-    },
-    // TODO: Custom Validation
-    // validate: () => {},
   };
 
   const getValue: GetValueHandler<T> = (name) => {
@@ -156,6 +148,8 @@ const useForm = <T = FieldValues>() => {
     register,
     handleSubmit,
     errors,
+    getValue,
+    getValues,
     watch,
   };
 };

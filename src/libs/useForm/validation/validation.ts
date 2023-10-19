@@ -3,7 +3,7 @@ import { ValidateType } from './type';
 export const validate: ValidateType = {
   // onBlue와 onSubmit 이벤트 발생시 검사
   required: (value, option) => {
-    if (value !== '') return [false, 'No Error'];
+    if (value !== '') return [false, ''];
 
     if (typeof option === 'boolean') {
       return [true, '형식에 맞지 않는 값입니다'];
@@ -11,28 +11,42 @@ export const validate: ValidateType = {
 
     return [true, option.message];
   },
+
   minLength: (value, option) => {
     console.log(value, option);
-    return [false, '형식에 맞지 않는 값입니다'];
+    return [false, ''];
+  },
+
+  min: (value, option) => {
+    console.log(value, option);
+    return [false, ''];
   },
 
   // onChange와 onSubmit 이벤트 발생 시 검사
   maxLength: (value, option) => {
-    console.log(value, option);
-    return [false, '형식에 맞지 않는 값입니다'];
+    if (typeof option === 'number') {
+      if (value.length > option) {
+        return [true, '형식에 맞지 않는 값입니다'];
+      }
+    } else {
+      if (value.length > option.value) {
+        return [true, option.message];
+      }
+    }
+
+    return [false, ''];
   },
+
   max: (value, option) => {
     console.log(value, option);
-    return [false, '형식에 맞지 않는 값입니다'];
+    return [false, ''];
   },
-  min: (value, option) => {
-    console.log(value, option);
-    return [false, '형식에 맞지 않는 값입니다'];
-  },
+
   pattern: (value, option) => {
     console.log(value, option);
-    return [false, '형식에 맞지 않는 값입니다'];
+    return [false, ''];
   },
+
   // TODO: Custom Validation
   // validate: () => {},
 };
