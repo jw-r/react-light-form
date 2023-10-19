@@ -59,7 +59,7 @@ const useForm = <T = FieldValues>() => {
         const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
 
         // validation
-        let [isError, errorMessage] = [false, ''];
+        let [isError, errorMessage] = [false, errors[name as keyof T] || ''];
         if (options) {
           const { maxLength, max, pattern } = options;
 
@@ -70,6 +70,8 @@ const useForm = <T = FieldValues>() => {
               [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
             }
           });
+
+          if (errorMessage === errors[name as keyof T]) return;
 
           if (isError && errors[name as keyof T] !== errorMessage) {
             setErrors((prev) => ({ ...prev, [name]: errorMessage }));
@@ -90,7 +92,7 @@ const useForm = <T = FieldValues>() => {
         // validation
         if (!options) return;
         const { name, value } = target;
-        let [isError, errorMessage] = [false, ''];
+        let [isError, errorMessage] = [false, errors[name as keyof T] || ''];
 
         const { required, minLength, min } = options;
         Object.entries({ required, minLength, min }).forEach(([key, pair]) => {
@@ -104,6 +106,10 @@ const useForm = <T = FieldValues>() => {
         });
 
         if (isError && options.onErrorFocus !== false) target.focus();
+        if (errorMessage === errors[name as keyof T]) {
+          target.focus();
+          return;
+        }
 
         if (isError && errors[name as keyof T] !== errorMessage) {
           setErrors((prev) => ({ ...prev, [name]: errorMessage }));
@@ -147,51 +153,53 @@ const useForm = <T = FieldValues>() => {
     return getValues(names);
   }
 
-  const handleSubmit: HandleSubmitHandler<T> = useCallback(
-    (callback) => (e) => {
-      e.preventDefault();
+  const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
+    console.log(1);
+    console.log(errors);
+    console.log(2);
+    e.preventDefault();
 
-      // validation
-      const targets = Object.values(inputRefs.current) as (EventTarget & FieldElementType)[];
-      let focusFlag = false;
+    // validation
+    const targets = Object.values(inputRefs.current) as (EventTarget & FieldElementType)[];
+    let focusFlag = false;
 
-      targets.forEach((target) => {
-        const { name, value } = target;
+    targets.forEach((target) => {
+      const { name, value } = target;
 
-        let [isError, errorMessage] = [false, ''];
-        const options = fieldOptions.current[name as keyof T];
-        if (!options) return;
+      let [isError, errorMessage] = [false, ''];
+      const options = fieldOptions.current[name as keyof T];
+      if (!options) return;
 
-        const { required, maxLength, minLength, max, min, pattern } = options;
-        const entries = Object.entries({ required, maxLength, minLength, max, min, pattern });
-        for (let i = 0; i < entries.length; i++) {
-          const [key, pair] = entries[i];
+      const { required, maxLength, minLength, max, min, pattern } = options;
+      const entries = Object.entries({ required, maxLength, minLength, max, min, pattern });
 
-          if (isError || !pair) break;
+      for (let i = 0; i < entries.length; i++) {
+        const [key, pair] = entries[i];
 
-          if (key === 'required' && pair) {
-            [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
-            if (isError) break;
-          } else if (key === 'maxLength' && pair) {
-            [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
-            if (isError) break;
-          }
+        if (isError) break;
+        if (!pair) continue;
+
+        if (key === 'required' && pair) {
+          [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
+          if (isError) break;
+        } else if (key === 'maxLength' && pair) {
+          [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+          if (isError) break;
         }
+      }
 
-        if (isError && errors[name as keyof T] !== errorMessage) {
-          setErrors((prev) => ({ ...prev, [name]: errorMessage }));
-        }
+      if (isError && errors[name as keyof T] !== errorMessage) {
+        setErrors((prev) => ({ ...prev, [name]: errorMessage }));
+      }
 
-        if (isError && options?.onErrorFocus !== false && !focusFlag) {
-          target.focus();
-          focusFlag = true;
-        }
-      });
+      if (isError && options?.onErrorFocus !== false && !focusFlag) {
+        target.focus();
+        focusFlag = true;
+      }
+    });
 
-      callback(valuesRef.current as T);
-    },
-    []
-  );
+    callback(valuesRef.current as T);
+  };
 
   return {
     register,
