@@ -165,8 +165,9 @@ const useForm = <T = FieldValues>() => {
         const { required, maxLength, minLength, max, min, pattern } = options;
         const entries = Object.entries({ required, maxLength, minLength, max, min, pattern });
         for (let i = 0; i < entries.length; i++) {
-          if (isError) break;
           const [key, pair] = entries[i];
+
+          if (isError || !pair) break;
 
           if (key === 'required' && pair) {
             [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
@@ -178,11 +179,10 @@ const useForm = <T = FieldValues>() => {
         }
 
         if (isError && errors[name as keyof T] !== errorMessage) {
-          console.log('대체 왜?');
           setErrors((prev) => ({ ...prev, [name]: errorMessage }));
         }
 
-        if (options?.onErrorFocus !== false && !focusFlag) {
+        if (isError && options?.onErrorFocus !== false && !focusFlag) {
           target.focus();
           focusFlag = true;
         }
