@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FieldElementType,
   FieldValues,
@@ -15,6 +15,7 @@ import { validate } from './validation/validation';
 const useForm = <T = FieldValues>() => {
   const [errors, setErrors] = useState<Partial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
+  const fieldOptions = useRef<Partial<Record<keyof T, OptionsType>>>({});
   const valuesRef = useRef<Partial<T>>({});
   const listeners = useRef<Set<keyof T>>(new Set());
   const { reRender } = useRender();
@@ -26,6 +27,8 @@ const useForm = <T = FieldValues>() => {
   }, []);
 
   const register = (name: keyof T, options?: OptionsType) => {
+    fieldOptions.current[name] = options;
+
     return {
       id: name,
 
@@ -59,29 +62,28 @@ const useForm = <T = FieldValues>() => {
         let [isError, errorMessage] = [false, ''];
         if (options) {
           const { maxLength, max, pattern } = options;
+
           Object.entries({ maxLength, max, pattern }).forEach(([key, pair]) => {
             if (isError) return;
 
             if (key === 'maxLength' && pair) {
               [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
-            } else if (key === 'max' && pair) {
-              [isError, errorMessage] = validate.max(value, pair as Validation<number>);
-            } else if (key === 'pattern' && pair) {
-              [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
             }
           });
 
           if (isError && errors[name as keyof T] !== errorMessage) {
             setErrors((prev) => ({ ...prev, [name]: errorMessage }));
-            options.onErrorFocus !== false && target.focus();
           } else if (!isError && errors[name as keyof T]) {
-            setErrors((prev) => ({ ...prev, [name]: '' }));
+            setErrors((prev) => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { [name as keyof T]: _, ...rest } = prev;
+              return rest as Partial<T>;
+            });
           }
+
+          valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
+          if (listeners.current.has(name as keyof T)) reRender();
         }
-
-        valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
-
-        if (listeners.current.has(name as keyof T)) reRender();
       },
 
       onBlur: ({ target }: React.FocusEvent<FieldElementType>) => {
@@ -101,11 +103,16 @@ const useForm = <T = FieldValues>() => {
           }
         });
 
+        if (isError && options.onErrorFocus !== false) target.focus();
+
         if (isError && errors[name as keyof T] !== errorMessage) {
           setErrors((prev) => ({ ...prev, [name]: errorMessage }));
-          options.onErrorFocus !== false && target.focus();
         } else if (!isError && errors[name as keyof T]) {
-          setErrors((prev) => ({ ...prev, [name]: '' }));
+          setErrors((prev) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [name as keyof T]: _, ...rest } = prev;
+            return rest as Partial<T>;
+          });
         }
       },
     };
@@ -140,22 +147,56 @@ const useForm = <T = FieldValues>() => {
     return getValues(names);
   }
 
-  const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
-    e.preventDefault();
+  const handleSubmit: HandleSubmitHandler<T> = useCallback(
+    (callback) => (e) => {
+      e.preventDefault();
 
-    // TODO: 유효성 검사
+      // validation
+      const targets = Object.values(inputRefs.current) as (EventTarget & FieldElementType)[];
+      let focusFlag = false;
 
-    const values = valuesRef.current as T;
+      targets.forEach((target) => {
+        const { name, value } = target;
 
-    callback(values);
-  };
+        let [isError, errorMessage] = [false, ''];
+        const options = fieldOptions.current[name as keyof T];
+        if (!options) return;
+
+        const { required, maxLength, minLength, max, min, pattern } = options;
+        const entries = Object.entries({ required, maxLength, minLength, max, min, pattern });
+        for (let i = 0; i < entries.length; i++) {
+          if (isError) break;
+          const [key, pair] = entries[i];
+
+          if (key === 'required' && pair) {
+            [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
+            if (isError) break;
+          } else if (key === 'maxLength' && pair) {
+            [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+            if (isError) break;
+          }
+        }
+
+        if (isError && errors[name as keyof T] !== errorMessage) {
+          console.log('대체 왜?');
+          setErrors((prev) => ({ ...prev, [name]: errorMessage }));
+        }
+
+        if (options?.onErrorFocus !== false && !focusFlag) {
+          target.focus();
+          focusFlag = true;
+        }
+      });
+
+      callback(valuesRef.current as T);
+    },
+    []
+  );
 
   return {
     register,
     handleSubmit,
     errors,
-    getValue,
-    getValues,
     watch,
   };
 };

@@ -13,12 +13,10 @@ export const validate: ValidateType = {
   },
 
   minLength: (value, option) => {
-    console.log(value, option);
     return [false, ''];
   },
 
   min: (value, option) => {
-    console.log(value, option);
     return [false, ''];
   },
 
@@ -38,12 +36,10 @@ export const validate: ValidateType = {
   },
 
   max: (value, option) => {
-    console.log(value, option);
     return [false, ''];
   },
 
   pattern: (value, option) => {
-    console.log(value, option);
     return [false, ''];
   },
 
