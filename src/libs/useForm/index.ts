@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   FieldElementType,
   FieldValues,
@@ -59,7 +59,7 @@ const useForm = <T = FieldValues>() => {
         const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
 
         // validation
-        let [isError, errorMessage] = [false, errors[name as keyof T] || ''];
+        let [isError, errorMessage] = [false, ''];
         if (options) {
           const { maxLength, max, pattern } = options;
 
@@ -70,8 +70,6 @@ const useForm = <T = FieldValues>() => {
               [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
             }
           });
-
-          if (errorMessage === errors[name as keyof T]) return;
 
           if (isError && errors[name as keyof T] !== errorMessage) {
             setErrors((prev) => ({ ...prev, [name]: errorMessage }));
@@ -106,13 +104,15 @@ const useForm = <T = FieldValues>() => {
         });
 
         if (isError && options.onErrorFocus !== false) target.focus();
-        if (errorMessage === errors[name as keyof T]) {
-          target.focus();
+        // 이전 에러 그대로일 때
+        if (isError && errors[name as keyof T] === errorMessage) {
           return;
         }
 
+        // 이전과 다른 에러가 발생했을 때
         if (isError && errors[name as keyof T] !== errorMessage) {
           setErrors((prev) => ({ ...prev, [name]: errorMessage }));
+          // 에러를 해결했을 때
         } else if (!isError && errors[name as keyof T]) {
           setErrors((prev) => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -154,9 +154,6 @@ const useForm = <T = FieldValues>() => {
   }
 
   const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
-    console.log(1);
-    console.log(errors);
-    console.log(2);
     e.preventDefault();
 
     // validation
