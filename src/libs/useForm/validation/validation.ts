@@ -3,10 +3,8 @@ import { ValidateType } from './type';
 export const validate: ValidateType = {
   required: (value, option) => {
     if (typeof option === 'boolean') {
-      console.log('여기 안와?');
       if (value === '') return [true, '형식에 맞지 않는 값입니다'];
     } else {
-      console.log('여긴?');
       if (value === '') return [true, option.message];
     }
 
@@ -37,7 +35,7 @@ export const validate: ValidateType = {
     if (typeof option === 'number') {
       if (value.length > option) return [true, '형식에 맞지 않는 값입니다'];
     } else {
-      if (value.length < option.value) return [true, option.message];
+      if (value.length > option.value) return [true, option.message];
     }
 
     return [false, ''];
@@ -47,7 +45,7 @@ export const validate: ValidateType = {
     if (typeof option === 'number') {
       if (Number(value) > option) return [true, '형식에 맞지 않는 값입니다'];
     } else {
-      if (value.length < option.value) return [true, option.message];
+      if (Number(value) > option.value) return [true, option.message];
     }
 
     return [false, ''];
