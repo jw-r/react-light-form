@@ -60,9 +60,9 @@ const useForm = <T = FieldValues>() => {
         // validation
         let [isError, errorMessage] = [false, ''];
         if (options) {
-          const { maxLength, max, pattern, required, minLength, min } = options;
+          const { required, pattern, minLength, min, maxLength, max } = options;
 
-          Object.entries({ maxLength, max, pattern, required, minLength, min }).forEach(
+          Object.entries({ required, pattern, minLength, min, maxLength, max }).forEach(
             ([key, pair]) => {
               if (isError) return;
 
@@ -148,30 +148,42 @@ const useForm = <T = FieldValues>() => {
     const targets = Object.values(inputRefs.current) as (EventTarget & FieldElementType)[];
     let focusFlag = false;
 
-    targets.forEach((target) => {
+    for (const target of targets) {
       const { name, value } = target;
 
-      let [isError, errorMessage] = [false, ''];
       const options = fieldOptions.current[name as keyof T];
-      if (!options) return;
+      if (!options) break;
 
-      const { required, maxLength, minLength, max, min, pattern } = options;
-      const entries = Object.entries({ required, maxLength, minLength, max, min, pattern });
+      let [isError, errorMessage] = [false, ''];
+      const { required, pattern, minLength, min, maxLength, max } = options;
+      Object.entries({ required, pattern, minLength, min, maxLength, max }).forEach(
+        ([key, pair]) => {
+          if (isError) return;
 
-      for (let i = 0; i < entries.length; i++) {
-        const [key, pair] = entries[i];
-
-        if (isError) break;
-        if (!pair) continue;
-
-        if (key === 'required' && pair) {
-          [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
-          if (isError) break;
-        } else if (key === 'maxLength' && pair) {
-          [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
-          if (isError) break;
+          if (pair) {
+            switch (key) {
+              case 'required':
+                [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
+                break;
+              case 'pattern':
+                [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
+                break;
+              case 'minLength':
+                [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
+                break;
+              case 'min':
+                [isError, errorMessage] = validate.min(value, pair as Validation<number>);
+                break;
+              case 'maxLength':
+                [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+                break;
+              case 'max':
+                [isError, errorMessage] = validate.max(value, pair as Validation<number>);
+                break;
+            }
+          }
         }
-      }
+      );
 
       if (isError && errors[name as keyof T] !== errorMessage) {
         setErrors((prev) => ({ ...prev, [name]: errorMessage }));
@@ -181,7 +193,7 @@ const useForm = <T = FieldValues>() => {
         target.focus();
         focusFlag = true;
       }
-    });
+    }
 
     callback(valuesRef.current as T);
   };
