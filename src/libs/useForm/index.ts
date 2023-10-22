@@ -56,23 +56,45 @@ const useForm = <T = FieldValues>() => {
 
       onChange: ({ target }: React.ChangeEvent<FieldElementType>) => {
         const { name, value } = target;
-        const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
 
         // validation
         let [isError, errorMessage] = [false, ''];
         if (options) {
-          const { maxLength, max, pattern } = options;
+          const { maxLength, max, pattern, required, minLength, min } = options;
 
-          Object.entries({ maxLength, max, pattern }).forEach(([key, pair]) => {
-            if (isError) return;
+          Object.entries({ maxLength, max, pattern, required, minLength, min }).forEach(
+            ([key, pair]) => {
+              if (isError) return;
 
-            if (key === 'maxLength' && pair) {
-              [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+              if (pair) {
+                switch (key) {
+                  case 'required':
+                    [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
+                    break;
+                  case 'pattern':
+                    [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
+                    break;
+                  case 'minLength':
+                    [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
+                    break;
+                  case 'min':
+                    [isError, errorMessage] = validate.min(value, pair as Validation<number>);
+                    break;
+                  case 'maxLength':
+                    [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+                    break;
+                  case 'max':
+                    [isError, errorMessage] = validate.max(value, pair as Validation<number>);
+                    break;
+                }
+              }
             }
-          });
+          );
 
+          // 이전에 발생한 에러가 아닐 때, 에러 업데이트
           if (isError && errors[name as keyof T] !== errorMessage) {
             setErrors((prev) => ({ ...prev, [name]: errorMessage }));
+            // 에러가 발생하지 않았음에도 에러 메시지가 존재할 때 (에러 제거)
           } else if (!isError && errors[name as keyof T]) {
             setErrors((prev) => {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -81,44 +103,10 @@ const useForm = <T = FieldValues>() => {
             });
           }
 
+          const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
           valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
+
           if (listeners.current.has(name as keyof T)) reRender();
-        }
-      },
-
-      onBlur: ({ target }: React.FocusEvent<FieldElementType>) => {
-        // validation
-        if (!options) return;
-        const { name, value } = target;
-        let [isError, errorMessage] = [false, errors[name as keyof T] || ''];
-
-        const { required, minLength, min } = options;
-        Object.entries({ required, minLength, min }).forEach(([key, pair]) => {
-          if (isError) return;
-
-          if (key === 'required' && pair) {
-            [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
-          } else if (key === 'minLength' && pair) {
-            [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
-          }
-        });
-
-        if (isError && options.onErrorFocus !== false) target.focus();
-        // 이전 에러 그대로일 때
-        if (isError && errors[name as keyof T] === errorMessage) {
-          return;
-        }
-
-        // 이전과 다른 에러가 발생했을 때
-        if (isError && errors[name as keyof T] !== errorMessage) {
-          setErrors((prev) => ({ ...prev, [name]: errorMessage }));
-          // 에러를 해결했을 때
-        } else if (!isError && errors[name as keyof T]) {
-          setErrors((prev) => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { [name as keyof T]: _, ...rest } = prev;
-            return rest as Partial<T>;
-          });
         }
       },
     };

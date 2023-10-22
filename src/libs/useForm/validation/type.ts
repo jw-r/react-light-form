@@ -5,10 +5,10 @@ type validateHandler<T> = (value: string, option: Validation<T>) => [boolean, st
 export interface ValidateType {
   required: validateHandler<boolean>;
   minLength: validateHandler<number>;
+  min: validateHandler<number>;
 
   maxLength: validateHandler<number>;
   max: validateHandler<number>;
-  min: validateHandler<number>;
   pattern: validateHandler<RegExp>;
 
   // TODO: Custom Validation
