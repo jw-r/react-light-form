@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  DeepPartial,
   FieldElementType,
   FieldValues,
   GetValueHandler,
@@ -11,9 +12,10 @@ import {
 import useRender from './useRender';
 import { Validation } from './validation/type';
 import { validate } from './validation/validation';
+import { set, get } from '../utils';
 
 const useForm = <T = FieldValues>() => {
-  const [errors, setErrors] = useState<Partial<T>>({});
+  const [errors, setErrors] = useState<DeepPartial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
   const fieldOptions = useRef<Partial<Record<keyof T, OptionsType>>>({});
   const valuesRef = useRef<Partial<T>>({});
@@ -61,45 +63,46 @@ const useForm = <T = FieldValues>() => {
         let [isError, errorMessage] = [false, ''];
         if (options) {
           const { required, pattern, minLength, min, maxLength, max } = options;
+          const entries = Object.entries({ required, pattern, minLength, min, maxLength, max });
 
-          Object.entries({ required, pattern, minLength, min, maxLength, max }).forEach(
-            ([key, pair]) => {
-              if (isError) return;
+          for (const [key, pair] of entries) {
+            if (isError) break;
+            if (!pair) continue;
 
-              if (pair) {
-                switch (key) {
-                  case 'required':
-                    [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
-                    break;
-                  case 'pattern':
-                    [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
-                    break;
-                  case 'minLength':
-                    [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
-                    break;
-                  case 'min':
-                    [isError, errorMessage] = validate.min(value, pair as Validation<number>);
-                    break;
-                  case 'maxLength':
-                    [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
-                    break;
-                  case 'max':
-                    [isError, errorMessage] = validate.max(value, pair as Validation<number>);
-                    break;
-                }
-              }
+            switch (key) {
+              case 'required':
+                [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
+                break;
+              case 'pattern':
+                [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
+                break;
+              case 'minLength':
+                [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
+                break;
+              case 'min':
+                [isError, errorMessage] = validate.min(value, pair as Validation<number>);
+                break;
+              case 'maxLength':
+                [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+                break;
+              case 'max':
+                [isError, errorMessage] = validate.max(value, pair as Validation<number>);
+                break;
             }
-          );
+          }
 
+          const curErrorMessageOfName = get(errors, name);
           // 이전에 발생한 에러가 아닐 때, 에러 업데이트
-          if (isError && errors[name as keyof T] !== errorMessage) {
-            setErrors((prev) => ({ ...prev, [name]: errorMessage }));
+          if (isError && curErrorMessageOfName !== errorMessage) {
+            setErrors((prev) => {
+              const newErrors = set({ ...prev }, name, errorMessage);
+              return newErrors;
+            });
             // 에러가 발생하지 않았음에도 에러 메시지가 존재할 때 (에러 제거)
           } else if (!isError && errors[name as keyof T]) {
             setErrors((prev) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { [name as keyof T]: _, ...rest } = prev;
-              return rest as Partial<T>;
+              const newErrors = set({ ...prev }, name, '');
+              return newErrors;
             });
           }
 
@@ -156,37 +159,40 @@ const useForm = <T = FieldValues>() => {
 
       let [isError, errorMessage] = [false, ''];
       const { required, pattern, minLength, min, maxLength, max } = options;
-      Object.entries({ required, pattern, minLength, min, maxLength, max }).forEach(
-        ([key, pair]) => {
-          if (isError) return;
+      const entries = Object.entries({ required, pattern, minLength, min, maxLength, max });
 
-          if (pair) {
-            switch (key) {
-              case 'required':
-                [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
-                break;
-              case 'pattern':
-                [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
-                break;
-              case 'minLength':
-                [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
-                break;
-              case 'min':
-                [isError, errorMessage] = validate.min(value, pair as Validation<number>);
-                break;
-              case 'maxLength':
-                [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
-                break;
-              case 'max':
-                [isError, errorMessage] = validate.max(value, pair as Validation<number>);
-                break;
-            }
-          }
+      for (const [key, pair] of entries) {
+        if (isError) break;
+        if (!pair) continue;
+
+        switch (key) {
+          case 'required':
+            [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
+            break;
+          case 'pattern':
+            [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
+            break;
+          case 'minLength':
+            [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
+            break;
+          case 'min':
+            [isError, errorMessage] = validate.min(value, pair as Validation<number>);
+            break;
+          case 'maxLength':
+            [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+            break;
+          case 'max':
+            [isError, errorMessage] = validate.max(value, pair as Validation<number>);
+            break;
         }
-      );
+      }
 
-      if (isError && errors[name as keyof T] !== errorMessage) {
-        setErrors((prev) => ({ ...prev, [name]: errorMessage }));
+      const curErrorMessageOfName = get(errors, name);
+      if (isError && curErrorMessageOfName !== errorMessage) {
+        setErrors((prev) => {
+          const newErrors = set({ ...prev }, name, errorMessage);
+          return newErrors;
+        });
       }
 
       if (isError && options?.onErrorFocus !== false && !focusFlag) {
