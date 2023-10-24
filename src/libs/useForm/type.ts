@@ -39,3 +39,22 @@ export type HandleSubmitHandler<T> = (
 export type GetValueHandler<T> = <K extends keyof T>(name: K) => T[K] | undefined;
 
 export type GetValuesHandler<T> = <K extends keyof T>(names: K[]) => { [P in K]?: T[P] };
+
+type Primitive = string | number | symbol | boolean | bigint | undefined | null;
+
+type ArrayKeys = number;
+
+export type DeepKeys<T, U extends string = ''> = T extends Primitive
+  ? U // 만약 T가 기본 타입이면 현재의 경로(U)를 반환.
+  : T extends Array<infer R>
+  ?
+      | U
+      | `${U}[${ArrayKeys}]`
+      | `${U}[${ArrayKeys}]${R extends Primitive ? '' : '.'}${DeepKeys<R, ''>}` // 배열의 경우, 배열 자체, 배열 요소, 배열 내 객체의 경로를 처리.
+  :
+      | U
+      | {
+          [P in keyof T]-?: P extends string | number
+            ? DeepKeys<T[P], U extends '' ? `${P}` : `${U}.${P}`>
+            : never;
+        }[keyof T]; // 객체의 경우, 객체 자체와 객체 내 프로퍼티의 경로를 처리.
