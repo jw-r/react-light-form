@@ -58,3 +58,12 @@ export type DeepKeys<T, U extends string = ''> = T extends Primitive
             ? DeepKeys<T[P], U extends '' ? `${P}` : `${U}.${P}`>
             : never;
         }[keyof T]; // 객체의 경우, 객체 자체와 객체 내 프로퍼티의 경로를 처리.
+
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends (infer U)[]
+    ? DeepPartial<U>[]
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    T[P] extends Record<string, any>
+    ? DeepPartial<T[P]>
+    : T[P];
+};
