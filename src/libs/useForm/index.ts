@@ -10,8 +10,7 @@ import {
   OptionsType,
 } from './type';
 import useRender from './useRender';
-import { Validation } from './validation/type';
-import { validate } from './validation/validation';
+import { validateField } from './validation/validation';
 import { set, get } from '../utils';
 
 const useForm = <T = FieldValues>() => {
@@ -60,36 +59,8 @@ const useForm = <T = FieldValues>() => {
         const { name, value } = target;
 
         // validation
-        let [isError, errorMessage] = [false, ''];
         if (options) {
-          const { required, pattern, minLength, min, maxLength, max } = options;
-          const entries = Object.entries({ required, pattern, minLength, min, maxLength, max });
-
-          for (const [key, pair] of entries) {
-            if (isError) break;
-            if (!pair) continue;
-
-            switch (key) {
-              case 'required':
-                [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
-                break;
-              case 'pattern':
-                [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
-                break;
-              case 'minLength':
-                [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
-                break;
-              case 'min':
-                [isError, errorMessage] = validate.min(value, pair as Validation<number>);
-                break;
-              case 'maxLength':
-                [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
-                break;
-              case 'max':
-                [isError, errorMessage] = validate.max(value, pair as Validation<number>);
-                break;
-            }
-          }
+          const [isError, errorMessage] = validateField(value, options);
 
           const curErrorMessageOfName = get(errors, name);
           // 이전에 발생한 에러가 아닐 때, 에러 업데이트
@@ -105,12 +76,12 @@ const useForm = <T = FieldValues>() => {
               return newErrors;
             });
           }
-
-          const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
-          valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
-
-          if (listeners.current.has(name as keyof T)) reRender();
         }
+
+        const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
+        valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
+
+        if (listeners.current.has(name as keyof T)) reRender();
       },
     };
   };
@@ -153,51 +124,23 @@ const useForm = <T = FieldValues>() => {
 
     for (const target of targets) {
       const { name, value } = target;
-
       const options = fieldOptions.current[name as keyof T];
-      if (!options) break;
 
-      let [isError, errorMessage] = [false, ''];
-      const { required, pattern, minLength, min, maxLength, max } = options;
-      const entries = Object.entries({ required, pattern, minLength, min, maxLength, max });
+      if (options) {
+        const [isError, errorMessage] = validateField(value, options);
 
-      for (const [key, pair] of entries) {
-        if (isError) break;
-        if (!pair) continue;
-
-        switch (key) {
-          case 'required':
-            [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
-            break;
-          case 'pattern':
-            [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
-            break;
-          case 'minLength':
-            [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
-            break;
-          case 'min':
-            [isError, errorMessage] = validate.min(value, pair as Validation<number>);
-            break;
-          case 'maxLength':
-            [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
-            break;
-          case 'max':
-            [isError, errorMessage] = validate.max(value, pair as Validation<number>);
-            break;
+        const curErrorMessageOfName = get(errors, name);
+        if (isError && curErrorMessageOfName !== errorMessage) {
+          setErrors((prev) => {
+            const newErrors = set({ ...prev }, name, errorMessage);
+            return newErrors;
+          });
         }
-      }
 
-      const curErrorMessageOfName = get(errors, name);
-      if (isError && curErrorMessageOfName !== errorMessage) {
-        setErrors((prev) => {
-          const newErrors = set({ ...prev }, name, errorMessage);
-          return newErrors;
-        });
-      }
-
-      if (isError && options?.onErrorFocus !== false && !focusFlag) {
-        target.focus();
-        focusFlag = true;
+        if (isError && options?.onErrorFocus !== false && !focusFlag) {
+          target.focus();
+          focusFlag = true;
+        }
       }
     }
 

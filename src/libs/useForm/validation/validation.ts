@@ -1,4 +1,5 @@
-import { ValidateType } from './type';
+import { OptionsType } from '../type';
+import { ValidateType, Validation } from './type';
 
 export const validate: ValidateType = {
   required: (value, option) => {
@@ -63,4 +64,38 @@ export const validate: ValidateType = {
 
   // TODO: Custom Validation
   // validate: () => {},
+};
+
+export const validateField = (value: string, options: OptionsType) => {
+  let [isError, errorMessage] = [false, ''];
+  const { required, pattern, minLength, min, maxLength, max } = options;
+  const entries = Object.entries({ required, pattern, minLength, min, maxLength, max });
+
+  for (const [key, pair] of entries) {
+    if (isError) break;
+    if (!pair) continue;
+
+    switch (key) {
+      case 'required':
+        [isError, errorMessage] = validate.required(value, pair as Validation<boolean>);
+        break;
+      case 'pattern':
+        [isError, errorMessage] = validate.pattern(value, pair as Validation<RegExp>);
+        break;
+      case 'minLength':
+        [isError, errorMessage] = validate.minLength(value, pair as Validation<number>);
+        break;
+      case 'min':
+        [isError, errorMessage] = validate.min(value, pair as Validation<number>);
+        break;
+      case 'maxLength':
+        [isError, errorMessage] = validate.maxLength(value, pair as Validation<number>);
+        break;
+      case 'max':
+        [isError, errorMessage] = validate.max(value, pair as Validation<number>);
+        break;
+    }
+  }
+
+  return [isError, errorMessage] as const;
 };
