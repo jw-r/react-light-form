@@ -1,3 +1,6 @@
 // set.d.ts
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function set(obj: object, path: string | any[], value: unknown): object;
+export default function set<T extends object>(
+  obj: T,
+  path: string | number | symbol,
+  value: unknown
+): T;

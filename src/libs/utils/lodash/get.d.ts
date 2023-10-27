@@ -1,3 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { DeepPartial } from '../../useForm/type';
+
 // get.d.ts
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function get(obj: object, path: string | any[], defaultValue?: any): object;
+export default function get<T>(
+  obj: DeepPartial<T>,
+  path: string | number | symbol,
+  defaultValue?: unknown
+): string | number | object;
