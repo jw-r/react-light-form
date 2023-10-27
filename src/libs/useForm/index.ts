@@ -10,6 +10,7 @@ import {
   HandleSubmitHandler,
   InputRefsType,
   OptionsType,
+  PathValue,
 } from './type';
 import useRender from './useRender';
 import { validateField } from './validation/validation';
@@ -95,21 +96,25 @@ const useForm = <T = FieldValues>() => {
     return value;
   };
 
-  const getValues: GetValuesHandler<T> = (names) => {
+  const getValues: GetValuesHandler<T> = <K extends DeepKeys<T>>(names: K[]) => {
     const values = names.reduce((acc, name) => {
       listeners.current.add(name);
       const currentValue = get(valuesRef.current, name);
       if (currentValue !== undefined) {
         acc[name] = currentValue;
       }
-    }, {});
+
+      return acc;
+    }, {} as { [P in K]?: PathValue<T, K> });
 
     return values;
   };
 
-  function watch<K extends keyof T>(name: K): T[K] | undefined;
-  function watch<K extends keyof T>(...names: K[]): { [P in K]?: T[P] };
-  function watch<K extends keyof T>(...names: K[]): T[K] | { [P in K]?: T[P] } | undefined {
+  function watch<K extends DeepKeys<T>>(name: K): PathValue<T, K> | undefined;
+  function watch<K extends DeepKeys<T>>(...names: K[]): { [P in K]?: PathValue<T, K> };
+  function watch<K extends DeepKeys<T>>(
+    ...names: K[]
+  ): PathValue<T, K> | { [P in K]?: PathValue<T, K> } | undefined {
     if (names.length === 1) {
       return getValue(names[0]);
     }

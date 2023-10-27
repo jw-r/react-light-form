@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { DeepPartial } from '../../useForm/type';
+import { DeepKeys, DeepPartial, PathValue } from '../../useForm/type';
 
 // get.d.ts
-export default function get<T>(
+export default function get<T, K extends DeepKeys<T>>(
   obj: DeepPartial<T>,
-  path: string | number | symbol,
+  path: K,
   defaultValue?: unknown
-): string | number | object;
+): PathValue<T, K>;

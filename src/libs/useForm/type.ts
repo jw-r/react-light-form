@@ -40,9 +40,11 @@ export type HandleSubmitHandler<T> = (
   callback: (values: T) => void
 ) => (e: React.FormEvent) => void;
 
-export type GetValueHandler<T> = <K extends DeepKeys<T>>(name: K) => T[K] | undefined;
+export type GetValueHandler<T> = <K extends DeepKeys<T>>(name: K) => PathValue<T, K> | undefined;
 
-export type GetValuesHandler<T> = <K extends keyof T>(names: K[]) => { [P in K]?: T[P] };
+export type GetValuesHandler<T> = <K extends DeepKeys<T>>(
+  names: K[]
+) => { [P in K]?: PathValue<T, K> };
 
 export type DeepKeys<T, U extends string = ''> = T extends Primitive
   ? U // 만약 T가 기본 타입이면 현재의 경로(U)를 반환.
@@ -67,3 +69,17 @@ export type DeepPartial<T> = {
     ? DeepPartial<T[P]>
     : T[P];
 };
+
+type ArrayElement<T> = T extends Array<infer R> ? R : never;
+
+export type PathValue<T, P extends string> = P extends `${infer K}.${infer R}`
+  ? K extends keyof T
+    ? PathValue<T[K], R>
+    : never
+  : P extends `${infer K}[${number}]`
+  ? K extends keyof T
+    ? ArrayElement<T[K]>
+    : never
+  : P extends keyof T
+  ? T[P]
+  : never;
