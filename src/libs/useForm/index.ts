@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  DeepKeys,
   DeepPartial,
   FieldElementType,
+  FieldOptionsType,
   FieldValues,
   GetValueHandler,
   GetValuesHandler,
@@ -15,10 +17,10 @@ import { set, get } from '../utils';
 
 const useForm = <T = FieldValues>() => {
   const [errors, setErrors] = useState<DeepPartial<T>>({});
+  const valuesRef = useRef<DeepPartial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
-  const fieldOptions = useRef<Partial<Record<keyof T, OptionsType>>>({});
-  const valuesRef = useRef<Partial<T>>({});
-  const listeners = useRef<Set<keyof T>>(new Set());
+  const fieldOptions = useRef<FieldOptionsType<T>>({});
+  const listeners = useRef<Set<DeepKeys<T>>>(new Set());
   const { reRender } = useRender();
 
   useEffect(() => {
@@ -27,7 +29,7 @@ const useForm = <T = FieldValues>() => {
     }
   }, []);
 
-  const register = (name: keyof T, options?: OptionsType) => {
+  const register = (name: DeepKeys<T>, options?: OptionsType) => {
     fieldOptions.current[name] = options;
 
     return {
@@ -44,7 +46,7 @@ const useForm = <T = FieldValues>() => {
           if (options?.initialValue) {
             element.value = String(options.initialValue);
 
-            valuesRef.current[name as keyof T] = options.initialValue as T[keyof T];
+            set(valuesRef.current, name, options.initialValue);
           }
 
           inputRefs.current[name] = element;
@@ -70,7 +72,7 @@ const useForm = <T = FieldValues>() => {
               return newErrors;
             });
             // 에러가 발생하지 않았음에도 에러 메시지가 존재할 때 (에러 제거)
-          } else if (!isError && errors[name as keyof T]) {
+          } else if (!isError && curErrorMessageOfName) {
             setErrors((prev) => {
               const newErrors = set({ ...prev }, name, '');
               return newErrors;
@@ -79,15 +81,15 @@ const useForm = <T = FieldValues>() => {
         }
 
         const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
-        valuesRef.current[name as keyof T] = transformedValue as T[keyof T];
+        set(valuesRef.current, name, transformedValue);
 
-        if (listeners.current.has(name as keyof T)) reRender();
+        if (listeners.current.has(name as DeepKeys<T>)) reRender();
       },
     };
   };
 
   const getValue: GetValueHandler<T> = (name) => {
-    const value = valuesRef.current[name];
+    const value = get(valuesRef.current, name);
     listeners.current.add(name);
 
     return value;
@@ -96,12 +98,11 @@ const useForm = <T = FieldValues>() => {
   const getValues: GetValuesHandler<T> = (names) => {
     const values = names.reduce((acc, name) => {
       listeners.current.add(name);
-      const currentValue = valuesRef.current[name];
+      const currentValue = get(valuesRef.current, name);
       if (currentValue !== undefined) {
         acc[name] = currentValue;
       }
-      return acc;
-    }, {} as Pick<T, (typeof names)[number]>);
+    }, {});
 
     return values;
   };
@@ -120,11 +121,11 @@ const useForm = <T = FieldValues>() => {
 
     // validation
     const targets = Object.values(inputRefs.current) as (EventTarget & FieldElementType)[];
-    let focusFlag = false;
+    let [errorFlag, focusFlag] = [false, false];
 
     for (const target of targets) {
       const { name, value } = target;
-      const options = fieldOptions.current[name as keyof T];
+      const options = fieldOptions.current[name as DeepKeys<T>];
 
       if (options) {
         const [isError, errorMessage] = validateField(value, options);
@@ -133,6 +134,7 @@ const useForm = <T = FieldValues>() => {
         if (isError && curErrorMessageOfName !== errorMessage) {
           setErrors((prev) => {
             const newErrors = set({ ...prev }, name, errorMessage);
+            errorFlag = true;
             return newErrors;
           });
         }
@@ -144,7 +146,7 @@ const useForm = <T = FieldValues>() => {
       }
     }
 
-    callback(valuesRef.current as T);
+    if (!errorFlag) callback(valuesRef.current as T);
   };
 
   return {
