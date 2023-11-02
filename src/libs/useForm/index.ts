@@ -21,11 +21,11 @@ const useForm = <T = FieldValues>() => {
   const valuesRef = useRef<DeepPartial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
   const fieldOptions = useRef<FieldOptionsType<T>>({});
-  const listeners = useRef<Set<DeepKeys<T>>>(new Set());
+  let listeners = 0;
   const { reRender } = useRender();
 
   useEffect(() => {
-    if (listeners.current.size > 0) {
+    if (listeners > 0) {
       reRender();
     }
   }, []);
@@ -65,7 +65,7 @@ const useForm = <T = FieldValues>() => {
         if (options) {
           const [isError, errorMessage] = validateField(value, options);
 
-          const curErrorMessageOfName = get(errors, name);
+          const curErrorMessageOfName = get(errors, name as DeepKeys<T>);
           // 이전에 발생한 에러가 아닐 때, 에러 업데이트
           if (isError && curErrorMessageOfName !== errorMessage) {
             setErrors((prev) => {
@@ -84,21 +84,21 @@ const useForm = <T = FieldValues>() => {
         const transformedValue = options?.setValueAs ? options.setValueAs(value) : value;
         set(valuesRef.current, name, transformedValue);
 
-        if (listeners.current.has(name as DeepKeys<T>)) reRender();
+        if (listeners) reRender();
       },
     };
   };
 
   const getValue: GetValueHandler<T> = (name) => {
     const value = get(valuesRef.current, name);
-    listeners.current.add(name);
+    listeners += 1;
 
     return value;
   };
 
   const getValues: GetValuesHandler<T> = <K extends DeepKeys<T>>(names: K[]) => {
     const values = names.reduce((acc, name) => {
-      listeners.current.add(name);
+      listeners += 1;
       const currentValue = get(valuesRef.current, name);
       if (currentValue !== undefined) {
         acc[name] = currentValue;
@@ -135,22 +135,21 @@ const useForm = <T = FieldValues>() => {
       if (options) {
         const [isError, errorMessage] = validateField(value, options);
 
-        const curErrorMessageOfName = get(errors, name);
+        const curErrorMessageOfName = get(errors, name as DeepKeys<T>);
         if (isError && curErrorMessageOfName !== errorMessage) {
+          errorFlag = true;
           setErrors((prev) => {
             const newErrors = set({ ...prev }, name, errorMessage);
-            errorFlag = true;
             return newErrors;
           });
         }
 
         if (isError && options?.onErrorFocus !== false && !focusFlag) {
-          target.focus();
           focusFlag = true;
+          target.focus();
         }
       }
     }
-
     if (!errorFlag) callback(valuesRef.current as T);
   };
 
@@ -159,6 +158,7 @@ const useForm = <T = FieldValues>() => {
     handleSubmit,
     errors,
     watch,
+    getValue,
   };
 };
 
