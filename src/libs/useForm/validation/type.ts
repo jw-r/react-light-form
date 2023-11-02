@@ -1,6 +1,10 @@
+import { ValueTypes } from '../type';
+
 export type Validation<T> = T | { value: T extends boolean ? true : T; message: string };
 
 type validateHandler<T> = (value: string, option: Validation<T>) => [boolean, string];
+
+export type ValidationCallback = (inputValue: ValueTypes) => boolean;
 
 export interface ValidateType {
   required: validateHandler<boolean>;
@@ -11,6 +15,5 @@ export interface ValidateType {
   max: validateHandler<number>;
   pattern: validateHandler<RegExp>;
 
-  // TODO: Custom Validation
-  // validate: Noop;
+  validation: validateHandler<ValidationCallback>;
 }

@@ -1,5 +1,5 @@
 import { OptionsType } from '../type';
-import { ValidateType, Validation } from './type';
+import { ValidateType, Validation, ValidationCallback } from './type';
 
 export const validate: ValidateType = {
   required: (value, option) => {
@@ -63,13 +63,21 @@ export const validate: ValidateType = {
   },
 
   // TODO: Custom Validation
-  // validate: () => {},
+  validation: (inputValue, option) => {
+    if (typeof option === 'function') {
+      if (option(inputValue)) return [true, '형식에 맞지 않는 값입니다'];
+    } else {
+      if (option.value(inputValue)) return [true, option.message];
+    }
+
+    return [false, ''];
+  },
 };
 
 export const validateField = (value: string, options: OptionsType) => {
   let [isError, errorMessage] = [false, ''];
-  const { required, pattern, minLength, min, maxLength, max } = options;
-  const entries = Object.entries({ required, pattern, minLength, min, maxLength, max });
+  const { required, pattern, minLength, min, maxLength, max, validation } = options;
+  const entries = Object.entries({ required, pattern, minLength, min, maxLength, max, validation });
 
   for (const [key, pair] of entries) {
     if (isError) break;
@@ -93,6 +101,12 @@ export const validateField = (value: string, options: OptionsType) => {
         break;
       case 'max':
         [isError, errorMessage] = validate.max(value, pair as Validation<number>);
+        break;
+      case 'validation':
+        [isError, errorMessage] = validate.validation(
+          value,
+          pair as Validation<ValidationCallback>
+        );
         break;
     }
   }

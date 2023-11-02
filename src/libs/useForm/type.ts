@@ -1,4 +1,4 @@
-import { Validation } from './validation/type';
+import { Validation, ValidationCallback } from './validation/type';
 
 export type Noop = () => void;
 
@@ -10,7 +10,7 @@ export type FieldOptionsType<T> = Partial<Record<DeepKeys<T>, OptionsType>>;
 
 export type FieldElementType = HTMLInputElement | HTMLTextAreaElement | null;
 
-type ValueTypes = string | number | boolean | Date;
+export type ValueTypes = string | number | boolean | Date;
 type Primitive = string | number | symbol | boolean | bigint | undefined | null;
 type ArrayKeys = number;
 
@@ -30,7 +30,7 @@ export type OptionsType = Partial<{
   max: Validation<number>;
   min: Validation<number>;
   pattern: Validation<RegExp>;
-  validate: Noop;
+  validation: Validation<ValidationCallback>;
 
   initialValue: ValueTypes;
   setValueAs: (value: string) => ValueTypes;
