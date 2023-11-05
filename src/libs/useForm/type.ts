@@ -8,7 +8,7 @@ export type InputRefsType<T> = {
 
 export type FieldOptionsType<T> = Partial<Record<DeepKeys<T>, OptionsType>>;
 
-export type FieldElementType = HTMLInputElement | HTMLTextAreaElement | null;
+export type FieldElementType = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
 
 export type ValueTypes = string | number | boolean | Date;
 type Primitive = string | number | symbol | boolean | bigint | undefined | null;
