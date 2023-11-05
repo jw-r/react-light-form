@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   DeepKeys,
   DeepPartial,
+  ErrorsType,
   FieldElementType,
   FieldOptionsType,
   FieldValues,
@@ -17,7 +18,7 @@ import { validateField } from './validation/validation';
 import { set, get } from '../utils';
 
 const useForm = <T = FieldValues>() => {
-  const [errors, setErrors] = useState<DeepPartial<T>>({});
+  const [errors, setErrors] = useState<ErrorsType<T>>({});
   const valuesRef = useRef<DeepPartial<T>>({});
   const inputRefs = useRef<InputRefsType<T>>({});
   const fieldOptions = useRef<FieldOptionsType<T>>({});

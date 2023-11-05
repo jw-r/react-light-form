@@ -6,6 +6,15 @@ export type InputRefsType<T> = {
   [K in DeepKeys<T>]?: FieldElementType;
 };
 
+export type ErrorsType<T> = {
+  [P in keyof T]?: T[P] extends (infer U)[]
+    ? ErrorsType<U>[]
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    T[P] extends Record<string, any>
+    ? ErrorsType<T[P]>
+    : string;
+};
+
 export type FieldOptionsType<T> = Partial<Record<DeepKeys<T>, OptionsType>>;
 
 export type FieldElementType = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
