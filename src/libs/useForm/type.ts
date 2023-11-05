@@ -16,7 +16,7 @@ type ArrayKeys = number;
 
 export interface FieldValues {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [x: string]: any;
+  [x: string]: unknown;
 }
 
 export type OptionsType = Partial<{

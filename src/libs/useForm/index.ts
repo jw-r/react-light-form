@@ -37,7 +37,7 @@ const useForm = <T = FieldValues>() => {
     fieldOptions.current[name] = options;
 
     return {
-      id: name,
+      id: String(name),
 
       name: String(name),
 
