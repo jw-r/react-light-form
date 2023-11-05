@@ -26,6 +26,9 @@ const useForm = <T = FieldValues>() => {
 
   useEffect(() => {
     if (listeners > 0) {
+      console.warn(
+        'It appears you are expecting a non-string value from the field. Please ensure you have specified a "setValueAs" property in your register function options to handle the value transformation appropriately.'
+      );
       reRender();
     }
   }, []);
@@ -122,6 +125,10 @@ const useForm = <T = FieldValues>() => {
   }
 
   const handleSubmit: HandleSubmitHandler<T> = (callback) => (e) => {
+    console.warn(
+      'It appears you are expecting a non-string value from the field. Please ensure you have specified a "setValueAs" property in your register function options to handle the value transformation appropriately.'
+    );
+
     e.preventDefault();
 
     // validation
@@ -158,7 +165,6 @@ const useForm = <T = FieldValues>() => {
     handleSubmit,
     errors,
     watch,
-    getValue,
   };
 };
 
