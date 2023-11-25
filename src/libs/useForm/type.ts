@@ -84,6 +84,10 @@ type ArrayElement<T> = T extends Array<infer R> ? R : never;
 export type PathValue<T, P extends string> = P extends `${infer K}.${infer R}`
   ? K extends keyof T
     ? PathValue<T[K], R>
+    : K extends `${infer ArrayKey}[${number}]`
+    ? ArrayKey extends keyof T
+      ? PathValue<ArrayElement<T[ArrayKey]>, R>
+      : never
     : never
   : P extends `${infer K}[${number}]`
   ? K extends keyof T
